@@ -10,8 +10,8 @@ if(POLICY CMP0042)
     set(CMAKE_MACOSX_RPATH TRUE)
 endif()
 
-option(CURLPP_BUILD_SHARED_LIBS ON)
-option(CURLPP_BUILD_STATIC_LIBS ON)
+option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
+option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
 
 # for unix platform, define install directories.
 include(GNUInstallDirs)
