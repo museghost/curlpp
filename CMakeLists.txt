@@ -11,7 +11,7 @@ if(POLICY CMP0042)
 endif()
 
 option(CURLPP_BUILD_SHARED_LIBS ON)
-option(CURLPP_BUILD_STSTIC_LIBS ON)
+option(CURLPP_BUILD_STATIC_LIBS ON)
 
 # for unix platform, define install directories.
 include(GNUInstallDirs)
