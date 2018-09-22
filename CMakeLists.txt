@@ -115,7 +115,9 @@ if (CURLPP_BUILD_STATIC_LIBS)
     # Now the library target "curlpp_static" will be named "curlpp.lib" with MS tools.
     # This conflicts with the "curlpp.lib" import library corresponding to "curlpp.dll",
     # so we add a "lib" prefix (which is default on other platforms anyway):
-    SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
+    if (NOT (CMAKE_SYSTEM MATCHES "Windows"))
+        SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
+    endif()
     target_link_libraries(${PROJECT_NAME}_static ${CURL_LIBRARIES} ${CONAN_LIBS})
 endif()
 
