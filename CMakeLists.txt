@@ -12,6 +12,7 @@ endif()
 
 option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
 option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
+option(CURLPP_CURL_PATH "additional path to find curl" "")
 
 # for unix platform, define install directories.
 include(GNUInstallDirs)
@@ -60,7 +61,7 @@ add_subdirectory(extras)
 
 message(STATUS "Looking for CURL")
 include(FindCURL)
-find_package(CURL REQUIRED)
+find_package(CURL REQUIRED PATH ${CURLPP_CURL_PATH})
 
 if(CURL_FOUND)
   message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
