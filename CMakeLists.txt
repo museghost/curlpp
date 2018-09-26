@@ -1,4 +1,4 @@
-project(curlpp) 
+project(curlpp)
 
 
 # In response to CMake 3.0 generating warnings regarding policy CMP0042,
@@ -21,12 +21,12 @@ if(WIN32)
     cmake_minimum_required(VERSION 3.4)
 
     # c++ 11 support from cmake 3.4 or newer
-    set(CMAKE_CXX_STANDARD 11) # C++11...
+    set(CMAKE_CXX_STANDARD 14) # C++14...
     set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
     set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-  else()
+else()
     if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.1)
         cmake_minimum_required(VERSION 2.8)
         # c++11 support for cmake 2.8.12 - 3.0.x
@@ -36,7 +36,7 @@ if(WIN32)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     else()
         # c++ 11 support from cmake 3.1 or newer
-        set(CMAKE_CXX_STANDARD 11) # C++11...
+        set(CMAKE_CXX_STANDARD 14) # C++14...
         set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
         set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
     endif()
@@ -58,22 +58,28 @@ add_subdirectory(extras)
 # Documented at https://cmake.org/cmake/help/v3.0/module/FindCURL.html?highlight=curlpp
 # Seems simple.
 
-message(STATUS "Looking for CURL")
-include(FindCURL)
-find_package(CURL REQUIRED)
-
-if(CURL_FOUND)
-  message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
-  message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
-  message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
+if (CURLPP_CURL_PATH)
+    message(STATUS "Manually set CURL path: " ${CURLPP_CURL_PATH})
+    set(CURL_INCLUDE_DIRS ${CURLPP_CURL_PATH}/include)
+    set(CURL_LIBRARIES ${CURLPP_CURL_PATH}/lib/libcurl.a)
 else()
-  message(FATAL_ERROR "Could not find CURL")
+    message(STATUS "Looking for CURL")
+    include(FindCURL)
+    find_package(CURL REQUIRED)
+
+    if(CURL_FOUND)
+        message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
+        message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
+        message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "Could not find CURL")
+    endif()
 endif()
 
 # All following targets should search these directories for headers
-include_directories( 
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CURL_INCLUDE_DIRS}
+include_directories(
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CURL_INCLUDE_DIRS}
 )
 
 #########################################################################################
@@ -81,9 +87,9 @@ include_directories(
 
 # If building on windows, install path will be in build/winbuild
 if(CMAKE_SYSTEM MATCHES "Windows")
-   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-      set(CMAKE_INSTALL_PREFIX "winbuild")
-   endif()
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set(CMAKE_INSTALL_PREFIX "winbuild")
+    endif()
 endif()
 
 file(GLOB_RECURSE HeaderFileList "${CMAKE_CURRENT_SOURCE_DIR}/include/*")
@@ -108,7 +114,9 @@ if (CURLPP_BUILD_STATIC_LIBS)
     # Now the library target "curlpp_static" will be named "curlpp.lib" with MS tools.
     # This conflicts with the "curlpp.lib" import library corresponding to "curlpp.dll",
     # so we add a "lib" prefix (which is default on other platforms anyway):
-    SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
+    if (NOT (CMAKE_SYSTEM MATCHES "Windows"))
+        SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
+    endif()
     target_link_libraries(${PROJECT_NAME}_static ${CURL_LIBRARIES} ${CONAN_LIBS})
 endif()
 

@@ -39,7 +39,8 @@ curlpp::Multi::~Multi()
   while (!mHandles.empty()) 
   {
     std::map<CURL *, const curlpp::Easy *>::iterator handle = mHandles.begin();
-    curl_multi_remove_handle(mMultiHandle, handle->second->getHandle());
+    // if caller deletes request before, this would raise EXC_BAD_ACCESS error using handle->second->getHandle()
+    curl_multi_remove_handle(mMultiHandle, handle->first);
     mHandles.erase(handle);
   }
 
@@ -107,9 +108,36 @@ curlpp::Multi::info()
     Multi::Info inf;
     inf.msg = msg->msg;
     inf.code = msg->data.result;
-    result.push_back(std::make_pair(mHandles[msg->easy_handle],inf));
+    result.emplace_back(std::make_pair(mHandles[msg->easy_handle],inf));
   }
 
   return result;
 }
 
+size_t
+curlpp::Multi::infos(curlpp::Multi::Msgs& result)
+{
+    size_t idx = 0;
+    CURLMsg* msg; /* for picking up messages with the transfer status */
+
+    int msgsInQueue;
+    while ((msg = curl_multi_info_read(mMultiHandle, &msgsInQueue)) != NULL) {
+
+        result[idx].first = mHandles[msg->easy_handle];
+        result[idx].second.msg = msg->msg;
+        result[idx].second.code = msg->data.result;
+        idx++;
+    }
+
+    return idx;
+}
+
+const CURLM*
+curlpp::Multi::getMHandle() const {
+  return mMultiHandle;
+}
+
+CURLM*
+curlpp::Multi::getMHandle() {
+  return mMultiHandle;
+}

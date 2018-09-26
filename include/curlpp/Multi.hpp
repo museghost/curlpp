@@ -27,7 +27,8 @@
 
 #include <curl/multi.h>
 
-#include <list>
+//#include <list>
+#include <vector>
 #include <map>
 
 
@@ -62,14 +63,18 @@ namespace curlpp
 								fd_set * exc_fd_set,
 								int * max_fd);
 
-		typedef std::list<std::pair<const curlpp::Easy *, Multi::Info> >
-			Msgs;
-		
+		typedef std::vector<std::pair<const curlpp::Easy *, Multi::Info> > Msgs;
+
 		Msgs info();
+        size_t infos(curlpp::Multi::Msgs& result);
+
+		const CURLM* getMHandle() const;
+
+		CURLM* getMHandle();
 
 	private:
 
-		CURLM * mMultiHandle;
+		CURLM* mMultiHandle;
 		std::map<CURL *, const curlpp::Easy *> mHandles;
 	};
 
