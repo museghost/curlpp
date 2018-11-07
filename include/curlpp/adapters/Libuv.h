@@ -17,7 +17,7 @@
 namespace curlpp {
 
     // c++ style callback
-    typedef std::function< void(CURLMsg* data) > OnMessageDoneFunctor;
+    typedef std::function< void(const curlpp::Easy *) > OnMessageDoneFunctor;
 
 
     /*
@@ -103,10 +103,7 @@ namespace curlpp {
          * event handler 가 호출되는 곳
          * */
         static void checkMultiInfo(curlLibuvHandler* cHnd) {
-            int pending;
-            CURLMsg* data = nullptr;
             CURLM* mHandle = cHnd->mt.getMHandle();
-
             size_t nMsgs = cHnd->mt.infos(cHnd->msgs);
 
             /*
@@ -117,7 +114,7 @@ namespace curlpp {
                 switch (cHnd->msgs[idx].second.msg) {
                     case CURLMSG_DONE:
                         if(cHnd->cb)
-                            cHnd->cb(data);
+                            cHnd->cb(cHnd->msgs[idx].first);
 
                         // callback 함수가 끝나면 해당 handler 를 지움
                         cHnd->mt.remove(cHnd->msgs[idx].first);
