@@ -12,6 +12,7 @@ endif()
 
 option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
 option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
+option(CURLPP_CURL_PATH "additional path to find curl" "")
 
 # for unix platform, define install directories.
 include(GNUInstallDirs)
@@ -20,7 +21,7 @@ if(WIN32)
     # cmake 3.4 is required for CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS
     cmake_minimum_required(VERSION 3.4)
 
-    # c++ 11 support from cmake 3.4 or newer
+    # c++ 14 support from cmake 3.4 or newer
     set(CMAKE_CXX_STANDARD 14) # C++14...
     set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
     set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
@@ -35,7 +36,7 @@ else()
         # since entreprise distribution tends to have 2.8 version.
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     else()
-        # c++ 11 support from cmake 3.1 or newer
+        # c++ 14 support from cmake 3.1 or newer
         set(CMAKE_CXX_STANDARD 14) # C++14...
         set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
         set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
@@ -58,11 +59,7 @@ add_subdirectory(extras)
 # Documented at https://cmake.org/cmake/help/v3.0/module/FindCURL.html?highlight=curlpp
 # Seems simple.
 
-if (CURLPP_CURL_PATH)
-    message(STATUS "Manually set CURL path: " ${CURLPP_CURL_PATH})
-    set(CURL_INCLUDE_DIRS ${CURLPP_CURL_PATH}/include)
-    set(CURL_LIBRARIES ${CURLPP_CURL_PATH}/lib/libcurl.a)
-else()
+if (CURLPP_CURL_PATH STREQUAL "")
     message(STATUS "Looking for CURL")
     include(FindCURL)
     find_package(CURL REQUIRED)
@@ -74,12 +71,16 @@ else()
     else()
         message(FATAL_ERROR "Could not find CURL")
     endif()
+else()
+    message(STATUS "Manually set CURL path: " ${CURLPP_CURL_PATH})
+    set(CURL_INCLUDE_DIRS ${CURLPP_CURL_PATH}/include)
+    set(CURL_LIBRARIES ${CURLPP_CURL_PATH}/lib/libcurl.a)
 endif()
 
 # All following targets should search these directories for headers
-include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CURL_INCLUDE_DIRS}
+include_directories( 
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CURL_INCLUDE_DIRS}
 )
 
 #########################################################################################
@@ -87,9 +88,9 @@ include_directories(
 
 # If building on windows, install path will be in build/winbuild
 if(CMAKE_SYSTEM MATCHES "Windows")
-    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX "winbuild")
-    endif()
+   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+      set(CMAKE_INSTALL_PREFIX "winbuild")
+   endif()
 endif()
 
 file(GLOB_RECURSE HeaderFileList "${CMAKE_CURRENT_SOURCE_DIR}/include/*")
