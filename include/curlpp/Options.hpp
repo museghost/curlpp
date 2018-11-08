@@ -104,6 +104,7 @@ namespace options
 	#if LIBCURL_VERSION_NUM >= 0x070907
 		typedef curlpp::OptionTrait<FILE *, CURLOPT_WRITEDATA> WriteFile;
 		typedef curlpp::OptionTrait<std::ostream *, CURLOPT_WRITEDATA> WriteStream;
+        typedef curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> WriteVoidData;
 	#else
 	#ifdef CURLPP_ALLOW_NOT_AVAILABLE
 		typedef curlpp::NotAvailableOptionTrait<FILE *, CURLOPT_WRITEDATA> WriteFile;
