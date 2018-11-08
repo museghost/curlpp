@@ -90,6 +90,9 @@ namespace options
 	typedef curlpp::OptionTrait<curlpp::types::WriteFunctionFunctor, CURLOPT_WRITEFUNCTION>
 		WriteFunction;
 
+	typedef curlpp::OptionTrait<curlpp::types::WriteFunctionDataFunctor, CURLOPT_WRITEFUNCTION>
+		WriteFunctionData;
+
 
        /**
 	* Using this option will reset CURLOPT_WRITEFUNCTION to 
