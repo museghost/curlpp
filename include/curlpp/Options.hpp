@@ -90,8 +90,8 @@ namespace options
 	typedef curlpp::OptionTrait<curlpp::types::WriteFunctionFunctor, CURLOPT_WRITEFUNCTION>
 		WriteFunction;
 
-	typedef curlpp::OptionTrait<curlpp::types::WriteFunctionDataFunctor, CURLOPT_WRITEFUNCTION>
-		WriteFunctionData;
+	typedef curlpp::OptionTrait<curlpp::types::WriteDataFunctionFunctor, CURLOPT_WRITEFUNCTION>
+		WriteDataFunction;
 
 
        /**
@@ -104,7 +104,6 @@ namespace options
 	#if LIBCURL_VERSION_NUM >= 0x070907
 		typedef curlpp::OptionTrait<FILE *, CURLOPT_WRITEDATA> WriteFile;
 		typedef curlpp::OptionTrait<std::ostream *, CURLOPT_WRITEDATA> WriteStream;
-        typedef curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> WriteVoidData;
 	#else
 	#ifdef CURLPP_ALLOW_NOT_AVAILABLE
 		typedef curlpp::NotAvailableOptionTrait<FILE *, CURLOPT_WRITEDATA> WriteFile;
@@ -318,6 +317,8 @@ namespace options
 
 	typedef curlpp::OptionTrait<void *, CURLOPT_PRIVATE> Private;
 	typedef curlpp::OptionTrait<std::string, CURLOPT_KRB4LEVEL> Krb4Level;
+
+    typedef curlpp::OptionTrait<void *, CURLOPT_WRITEDATA> WriteData;
 
 
 	//Share;

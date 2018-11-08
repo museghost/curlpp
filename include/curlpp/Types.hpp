@@ -37,7 +37,7 @@ namespace types
 {
 
 	typedef std::function< size_t(char*, size_t, size_t) > WriteFunctionFunctor;
-	typedef std::function< size_t(char*, size_t, size_t, void*) > WriteFunctionDataFunctor;
+	typedef std::function< size_t(char*, size_t, size_t, void*) > WriteDataFunctionFunctor;
 	typedef std::function< size_t(char*, size_t, size_t) > ReadFunctionFunctor;
 	/// DebugFunctor related typedefs
         typedef std::function< int(curl_infotype, char *, size_t) > DebugFunctionFunctor;

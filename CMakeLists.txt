@@ -97,7 +97,7 @@ file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 if (CURLPP_BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
-    target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES} ${CONAN_LIBS})
+    target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES} ${CONAN_LIBS} /usr/local/lib/libnghttp2.a /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a /usr/lib/libldap.dylib /usr/lib/libz.dylib)
     set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
 endif()
 
@@ -117,7 +117,7 @@ if (CURLPP_BUILD_STATIC_LIBS)
     if (NOT (CMAKE_SYSTEM MATCHES "Windows"))
         SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
     endif()
-    target_link_libraries(${PROJECT_NAME}_static ${CURL_LIBRARIES} ${CONAN_LIBS})
+    target_link_libraries(${PROJECT_NAME}_static ${CURL_LIBRARIES} ${CONAN_LIBS} /usr/local/lib/libnghttp2.a /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a /usr/lib/libldap.dylib /usr/lib/libz.dylib)
 endif()
 
 # install headers

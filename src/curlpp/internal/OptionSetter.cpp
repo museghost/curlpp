@@ -46,6 +46,13 @@ struct Callbacks
 
 
 	static size_t
+	WriteDataCallback(char * buffer, size_t size, size_t nitems, internal::CurlHandle * handle)
+	{
+		return handle->executeWriteDataFunctor(buffer, size, nitems, static_cast<void*>(handle));
+	}
+
+
+	static size_t
 	StreamWriteCallback(char * buffer, size_t size, size_t nitems, std::ostream * stream)
 	{
 		size_t realwrote = size * nitems;
@@ -120,6 +127,16 @@ void OptionSetter<curlpp::Forms, CURLOPT_HTTPPOST>
 ::setOpt(internal::CurlHandle * handle, ParamType value)
 {
 	handle->option(CURLOPT_HTTPPOST, value.cHttpPost());
+};
+
+
+void OptionSetter<curlpp::types::WriteDataFunctionFunctor, CURLOPT_WRITEFUNCTION>
+::setOpt(internal::CurlHandle * handle, ParamType value)
+{
+	handle->option(CURLOPT_WRITEFUNCTION, Callbacks::WriteDataCallback);
+	handle->option(CURLOPT_WRITEDATA, handle);
+	handle->option(CURLOPT_PRIVATE, handle);
+	handle->setWriteDataFunctor(value);
 };
 
 

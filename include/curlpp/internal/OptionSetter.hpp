@@ -122,8 +122,28 @@ namespace internal
 	*/
 
 	template<>
-	class OptionSetter<curlpp::types::WriteFunctionFunctor,
-																CURLOPT_WRITEFUNCTION>
+	class OptionSetter<curlpp::types::WriteDataFunctionFunctor, CURLOPT_WRITEFUNCTION>
+	{
+
+	public:
+
+		typedef curlpp::types::WriteDataFunctionFunctor
+				OptionValueType;
+
+		typedef curlpp::internal::OptionContainerType<OptionValueType>::HandleOptionType
+				ParamType;
+
+		static void setOpt(internal::CurlHandle * handle, ParamType value);
+
+	};
+
+
+	/**
+	* Specialization.
+	*/
+
+	template<>
+	class OptionSetter<curlpp::types::WriteFunctionFunctor, CURLOPT_WRITEFUNCTION>
 	{
 
 	public:
@@ -208,7 +228,7 @@ namespace internal
 	};
 
 
-	/**
+    /**
 	* Specialization.
 	*/
 

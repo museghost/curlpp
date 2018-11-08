@@ -51,8 +51,8 @@ namespace internal
 
 	public:
 
-		CurlHandle();
-		CurlHandle(CURL * handle);
+		CurlHandle(size_t maxBufSize=4096);
+		CurlHandle(CURL * handle, size_t maxBufSize=4096);
 
 		std::unique_ptr<CurlHandle> clone() const;
 
@@ -109,6 +109,12 @@ namespace internal
 			mWriteFunctor = functor;
 		}
 
+        size_t executeWriteDataFunctor(char * buffer, size_t size, size_t nitems, void* data);
+
+		void setWriteDataFunctor(curlpp::types::WriteDataFunctionFunctor functor)
+		{
+			mWriteDataFunctor = functor;
+		}
 
 		size_t executeHeaderFunctor(char * buffer, size_t size, size_t nitems);
 
@@ -155,6 +161,26 @@ namespace internal
 		void setException(curlpp::CallbackExceptionBase * e);
 		void throwException();
 
+        char* buffer() {
+            return mBuf;
+        }
+
+        const char* buffer() const {
+            return mBuf;
+        }
+
+        void setBufferSize(size_t size) {
+            mSize = size;
+        }
+
+        size_t bufferSize() {
+            return mSize;
+        }
+
+        const size_t bufferSize() const {
+            return mSize;
+        }
+
 	private:
 
 		CurlHandle(const CurlHandle & other);
@@ -179,6 +205,11 @@ namespace internal
 
 		char mErrorBuffer[CURL_ERROR_SIZE + 1];
 
+        char* mBuf;
+        size_t mSize;
+        size_t mMaxBufSize;
+
+		curlpp::types::WriteDataFunctionFunctor mWriteDataFunctor;
 		curlpp::types::WriteFunctionFunctor mWriteFunctor;
 		curlpp::types::WriteFunctionFunctor mHeaderFunctor;
 		curlpp::types::ReadFunctionFunctor mReadFunctor;

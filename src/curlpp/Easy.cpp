@@ -29,18 +29,21 @@
 #include <memory>
 
 
-curlpp::Easy::Easy()
-: mCurl(new internal::CurlHandle())
-{}
+curlpp::Easy::Easy(size_t maxBufSize)
+: mCurl(new internal::CurlHandle(maxBufSize))
+{
+}
 
 
 curlpp::Easy::Easy(std::unique_ptr<internal::CurlHandle> handle)
     : mCurl(std::move(handle))
-{}
+{
+}
 
 
 curlpp::Easy::~Easy()
-{}
+{
+}
 
 
 void 

@@ -49,7 +49,7 @@ namespace curlpp
 
 		friend struct InfoGetter;
 
-		Easy();
+		Easy(size_t maxBufSize=4096);
 
 		/**
 		* This allow to have a handle, which might have
@@ -125,7 +125,7 @@ namespace curlpp
  		*/
 		virtual void reset ();
 
- 		/**
+        /**
 		* This function will return the cURL * handle.
 		* DO NOT use this, unless you REALLY know what you
 		* are doing.
@@ -153,7 +153,6 @@ namespace curlpp
 		std::unique_ptr<internal::CurlHandle> mCurl;
 
 		internal::OptionList mOptions;
-
 	};
 
 

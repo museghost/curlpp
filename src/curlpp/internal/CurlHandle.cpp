@@ -59,6 +59,8 @@ void CurlHandle::reset()
 	curl_easy_reset(mCurl);
 	memset(mErrorBuffer,0,CURL_ERROR_SIZE + 1);
 	errorBuffer(mErrorBuffer);
+
+    mSize = 0;
 }
 
 
@@ -68,23 +70,33 @@ CURL * CurlHandle::getHandle() const
 }
 
 
-CurlHandle::CurlHandle() 
-	: mException(nullptr)
+CurlHandle::CurlHandle(size_t maxBufSize)
+	: mException(nullptr),
+      mBuf(nullptr),
+      mSize(0),
+      mMaxBufSize(maxBufSize)
 {
 	memset(mErrorBuffer,0,CURL_ERROR_SIZE + 1);
 	mCurl = curl_easy_init();
 	runtimeAssert("Error when trying to curl_easy_init() a handle", mCurl != nullptr);
 	errorBuffer(mErrorBuffer);
+
+    mBuf = static_cast<char*>(malloc(mMaxBufSize));
 }
 
 
-CurlHandle::CurlHandle(CURL * handle) 
-	: mException(nullptr)
+CurlHandle::CurlHandle(CURL * handle, size_t maxBufSize)
+	: mException(nullptr),
+      mBuf(nullptr),
+      mSize(0),
+      mMaxBufSize(maxBufSize)
 {
 	memset(mErrorBuffer,0,CURL_ERROR_SIZE + 1);
 	mCurl = handle;
 	runtimeAssert("Error when trying to curl_easy_init() a handle", mCurl != nullptr);
 	errorBuffer(mErrorBuffer);
+
+    mBuf = static_cast<char*>(malloc(mMaxBufSize));
 }
 
 
@@ -93,7 +105,7 @@ CurlHandle::clone() const
 {
 	CURL * cHandle = curl_easy_duphandle(mCurl);
 	runtimeAssert("Error when trying to curl_easy_duphandle() a handle", cHandle != nullptr);
-	unique_ptr<CurlHandle> newHandle(new CurlHandle(cHandle));
+	unique_ptr<CurlHandle> newHandle(new CurlHandle(cHandle, mMaxBufSize));
 
 	return newHandle;
 }
@@ -106,6 +118,12 @@ CurlHandle::~CurlHandle()
 		delete mException;
 		mException = nullptr;
 	}
+
+    if (mBuf) {
+        free(mBuf);
+        mBuf = nullptr;
+    }
+
 	curl_easy_cleanup(mCurl);
 }
 
@@ -168,6 +186,34 @@ CurlHandle::executeWriteFunctor(char * buffer, size_t size, size_t nitems)
 	try
 	{
 		return mWriteFunctor(buffer, size, nitems);
+	}
+
+	catch(curlpp::CallbackExceptionBase * e)
+	{
+		setException(e);
+	}
+
+	catch(...)
+	{
+		setException(new CallbackException<curlpp::UnknowException>(curlpp::UnknowException()));
+	}
+
+	return CURLE_ABORTED_BY_CALLBACK;
+}
+
+
+size_t
+CurlHandle::executeWriteDataFunctor(char * buffer, size_t size, size_t nitems, void *data)
+{
+	if (!mWriteDataFunctor)
+	{
+		setException(new CallbackException<curlpp::LogicError>(curlpp::LogicError("Null write functor")));
+		return CURLE_ABORTED_BY_CALLBACK;
+	}
+
+	try
+	{
+		return mWriteDataFunctor(buffer, size, nitems, data);
 	}
 
 	catch(curlpp::CallbackExceptionBase * e)

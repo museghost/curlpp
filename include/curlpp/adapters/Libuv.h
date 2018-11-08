@@ -103,7 +103,6 @@ namespace curlpp {
          * event handler 가 호출되는 곳
          * */
         static void checkMultiInfo(curlLibuvHandler* cHnd) {
-            CURLM* mHandle = cHnd->mt.getMHandle();
             size_t nMsgs = cHnd->mt.infos(cHnd->msgs);
 
             /*
