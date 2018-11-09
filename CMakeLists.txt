@@ -12,7 +12,7 @@ endif()
 
 option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
 option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
-option(CURLPP_CURL_PATH "additional path to find curl" "")
+option(CURLPP_NGHTTP2 "supported nghttp2" ON)
 
 # for unix platform, define install directories.
 include(GNUInstallDirs)
@@ -59,7 +59,7 @@ add_subdirectory(extras)
 # Documented at https://cmake.org/cmake/help/v3.0/module/FindCURL.html?highlight=curlpp
 # Seems simple.
 
-if (CURLPP_CURL_PATH STREQUAL "")
+if (NOT CURLPP_CURL_PATH)
     message(STATUS "Looking for CURL")
     include(FindCURL)
     find_package(CURL REQUIRED)
@@ -73,8 +73,29 @@ if (CURLPP_CURL_PATH STREQUAL "")
     endif()
 else()
     message(STATUS "Manually set CURL path: " ${CURLPP_CURL_PATH})
-    set(CURL_INCLUDE_DIRS ${CURLPP_CURL_PATH}/include)
-    set(CURL_LIBRARIES ${CURLPP_CURL_PATH}/lib/libcurl.a)
+    include(FindPkgConfig)
+    set(ENV{PKG_CONFIG_PATH} "${CURLPP_CURL_PATH}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+    pkg_check_modules(CURL REQUIRED libcurl>=7.62.0)
+    if(CURL_FOUND)
+        message(STATUS "Found CURL version: ${CURL_VERSION}")
+        message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
+        message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "Could not find CURL")
+        exit()
+    endif()
+endif()
+
+message(STATUS " nghttp ${CURLPP_NGHTTP2}")
+if(CURLPP_NGHTTP2)
+    message(STATUS "Looking for NGHTTP2")
+    pkg_check_modules(NGHTTP2 REQUIRED libnghttp2>=1.34)
+    if(NGHTTP2_FOUND)
+        message(STATUS "Found nghttp2 version: ${NGHTTP2_VERSION}")
+        message(STATUS "Using nghttp2 include dir(s): ${NGHTTP2_INCLUDE_DIRS}")
+        message(STATUS "Using nghttp2 lib(s): ${NGHTTP2_LIBRARIES}")
+        message(STATUS "Using nghttp2 static lib(s): ${NGHTTP2_STATIC_LIBRARIES}")
+    endif()
 endif()
 
 # All following targets should search these directories for headers
@@ -98,7 +119,11 @@ file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 if (CURLPP_BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
-    target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES} ${CONAN_LIBS} /usr/local/lib/libnghttp2.a /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a /usr/lib/libldap.dylib /usr/lib/libz.dylib)
+    target_link_libraries(${PROJECT_NAME}
+            ${CURL_LIBRARIES}
+            ${CONAN_LIBS}
+            ${NGHTTP2_STATIC_LIBRARIES}
+            )
     set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
 endif()
 
@@ -118,7 +143,11 @@ if (CURLPP_BUILD_STATIC_LIBS)
     if (NOT (CMAKE_SYSTEM MATCHES "Windows"))
         SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
     endif()
-    target_link_libraries(${PROJECT_NAME}_static ${CURL_LIBRARIES} ${CONAN_LIBS} /usr/local/lib/libnghttp2.a /usr/local/opt/openssl/lib/libssl.a /usr/local/opt/openssl/lib/libcrypto.a /usr/lib/libldap.dylib /usr/lib/libz.dylib)
+    target_link_libraries(${PROJECT_NAME}_static
+            ${CURL_LIBRARIES}
+            ${CONAN_LIBS}
+            ${NGHTTP2_STATIC_LIBRARIES}
+            )
 endif()
 
 # install headers
