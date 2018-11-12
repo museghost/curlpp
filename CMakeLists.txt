@@ -14,6 +14,9 @@ option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
 option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
 option(CURLPP_NGHTTP2 "supported nghttp2" ON)
 
+# Append our module directory to CMake
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-macro)
+
 # for unix platform, define install directories.
 include(GNUInstallDirs)
 
@@ -53,55 +56,33 @@ endif()
 # extra (pkg-config-related files)
 add_subdirectory(extras)
 
-#########################################################################################
-# Look for dependencies
+include(FindCustomCURL)
+# find libcurl
+find_custom_curl(CURL 7.62.0)
 
-# Documented at https://cmake.org/cmake/help/v3.0/module/FindCURL.html?highlight=curlpp
-# Seems simple.
-
-if (NOT CURLPP_CURL_PATH)
-    message(STATUS "Looking for CURL")
-    include(FindCURL)
-    find_package(CURL REQUIRED)
-
-    if(CURL_FOUND)
-        message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
-        message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
-        message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
-    else()
-        message(FATAL_ERROR "Could not find CURL")
-    endif()
-else()
-    message(STATUS "Manually set CURL path: " ${CURLPP_CURL_PATH})
-    include(FindPkgConfig)
-    set(ENV{PKG_CONFIG_PATH} "${CURLPP_CURL_PATH}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-    pkg_check_modules(CURL REQUIRED libcurl>=7.62.0)
-    if(CURL_FOUND)
-        message(STATUS "Found CURL version: ${CURL_VERSION}")
-        message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
-        message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
-    else()
-        message(FATAL_ERROR "Could not find CURL")
-        exit()
-    endif()
+# find openssl
+include(FindCustomOpenSSL)
+if(APPLE)
+    message(STATUS "APPLE try to find openssl with brew")
+    find_custom_openssl(OPENSSL 1.0.2)
+elseif(UNIX AND NOT APPLE)
+    message(STATUS "LINUX try to find openssl in /usr/local")
+    find_custom_openssl(OPENSSL 1.1.0i)
+elseif(MINGW)
+    message(STATUS "MinGW try to find openssl in mingw")
+    find_custom_openssl(OPENSSL 1.0.2)
 endif()
 
-message(STATUS " nghttp ${CURLPP_NGHTTP2}")
+# find nghttp2
 if(CURLPP_NGHTTP2)
-    message(STATUS "Looking for NGHTTP2")
-    pkg_check_modules(NGHTTP2 REQUIRED libnghttp2>=1.34)
-    if(NGHTTP2_FOUND)
-        message(STATUS "Found nghttp2 version: ${NGHTTP2_VERSION}")
-        message(STATUS "Using nghttp2 include dir(s): ${NGHTTP2_INCLUDE_DIRS}")
-        message(STATUS "Using nghttp2 lib(s): ${NGHTTP2_LIBRARIES}")
-        message(STATUS "Using nghttp2 static lib(s): ${NGHTTP2_STATIC_LIBRARIES}")
-    endif()
+    message(STATUS "nghttp2 ${CURLPP_NGHTTP2}")
+    include(FindCustomNghttp2)
+    find_custom_nghttp2(NGHTTP2 1.34.0)
 endif()
 
 # All following targets should search these directories for headers
-include_directories( 
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
-  ${CURL_INCLUDE_DIRS}
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 #########################################################################################
@@ -122,7 +103,8 @@ if (CURLPP_BUILD_SHARED_LIBS)
     target_link_libraries(${PROJECT_NAME}
             ${CURL_LIBRARIES}
             ${CONAN_LIBS}
-            ${NGHTTP2_STATIC_LIBRARIES}
+            ${NGHTTP2_LIBRARIES}
+            ${OPENSSL_LIBRARIES}
             )
     set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
 endif()
@@ -146,7 +128,8 @@ if (CURLPP_BUILD_STATIC_LIBS)
     target_link_libraries(${PROJECT_NAME}_static
             ${CURL_LIBRARIES}
             ${CONAN_LIBS}
-            ${NGHTTP2_STATIC_LIBRARIES}
+            ${NGHTTP2_LIBRARIES}
+            ${OPENSSL_LIBRARIES}
             )
 endif()
 
