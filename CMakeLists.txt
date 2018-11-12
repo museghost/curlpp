@@ -106,7 +106,9 @@ if (CURLPP_BUILD_SHARED_LIBS)
             ${NGHTTP2_LIBRARIES}
             ${OPENSSL_LIBRARIES}
             )
-    set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 1 VERSION 1.0.0)
+    set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.8.1)
+
 endif()
 
 if (CURLPP_BUILD_STATIC_LIBS)

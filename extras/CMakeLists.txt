@@ -20,6 +20,8 @@ set(libdir_static "${CMAKE_INSTALL_LIBDIR}")
 set(includedir "${CMAKE_INSTALL_INCLUDEDIR}")
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 
+set(VERSION "${CURLPP_VERSION}")
+
 set(LDFLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 # Finally generate a "curl-config" matching this config
