@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.7)
+
 project(curlpp)
 
 
@@ -5,10 +7,10 @@ project(curlpp)
 # the OSX RPATH settings have been updated per recommendations found
 # in the CMake Wiki:
 #  http://www.cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
-if(POLICY CMP0042)
-    cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH
-    set(CMAKE_MACOSX_RPATH TRUE)
-endif()
+#if(POLICY CMP0042)
+#    cmake_policy(SET CMP0042 NEW) # MACOSX_RPATH
+#    set(CMAKE_MACOSX_RPATH TRUE)
+#endif()
 
 option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
 option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
