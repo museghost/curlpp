@@ -1,6 +1,12 @@
 macro(set_custom_lib_vars _NAME)
     string(TOUPPER ${_NAME} _NAME_UPPER)
     string(TOLOWER ${_NAME} _NAME_LOWER)
+
+    if (NOT ${_NAME}_CUSTOM_PATH)
+        if (BSVENDOR_DIR)
+            set(${_NAME}_CUSTOM_PATH ${BSVENDOR_DIR})
+        endif()            
+    endif()
 endmacro()
 
 
@@ -29,12 +35,12 @@ function(find_custom_library _NAME _LIBS _VER)
             set(${_NAME}_VERSION ${${_NAME}_VERSION_STRING})
         else()
             include(FindPkgConfig)
-            message(STATUS "pkg_config_path : $ENV{PKG_CONFIG_PATH}")
+            message(STATUS "normal pkg_config_path: $ENV{PKG_CONFIG_PATH}")
             pkg_check_modules(${_NAME} ${_LIBS}>=${_VER})
         endif()
     else()
         message(STATUS "Manually set ${_NAME} path: ${${_NAME}_CUSTOM_PATH}")
-        set(ENV{PKG_CONFIG_PATH} "${${_NAME}_CUSTOM_PATH}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+        set(ENV{PKG_CONFIG_PATH} "${${_NAME}_CUSTOM_PATH}/lib/pkgconfig")
         message(STATUS "pkg_config_path : $ENV{PKG_CONFIG_PATH}")
 
         include(FindPkgConfig)
