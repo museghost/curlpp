@@ -70,33 +70,33 @@ CURL * CurlHandle::getHandle() const
 }
 
 
-CurlHandle::CurlHandle(size_t maxBufSize)
+CurlHandle::CurlHandle(size_t max_buf_size)
 	: mException(nullptr),
       mBuf(nullptr),
       mSize(0),
-      mMaxBufSize(maxBufSize)
+      max_buf_size_(max_buf_size)
 {
-	memset(mErrorBuffer,0,CURL_ERROR_SIZE + 1);
+	memset(mErrorBuffer, 0, CURL_ERROR_SIZE + 1);
 	mCurl = curl_easy_init();
 	runtimeAssert("Error when trying to curl_easy_init() a handle", mCurl != nullptr);
 	errorBuffer(mErrorBuffer);
 
-    mBuf = static_cast<char*>(malloc(mMaxBufSize));
+    mBuf = static_cast<char*>(malloc(max_buf_size));
 }
 
 
-CurlHandle::CurlHandle(CURL * handle, size_t maxBufSize)
+CurlHandle::CurlHandle(CURL * handle, size_t max_buf_size)
 	: mException(nullptr),
       mBuf(nullptr),
       mSize(0),
-      mMaxBufSize(maxBufSize)
+      max_buf_size_(max_buf_size)
 {
 	memset(mErrorBuffer,0,CURL_ERROR_SIZE + 1);
 	mCurl = handle;
 	runtimeAssert("Error when trying to curl_easy_init() a handle", mCurl != nullptr);
 	errorBuffer(mErrorBuffer);
 
-    mBuf = static_cast<char*>(malloc(mMaxBufSize));
+    mBuf = static_cast<char*>(malloc(max_buf_size));
 }
 
 
@@ -105,7 +105,7 @@ CurlHandle::clone() const
 {
 	CURL * cHandle = curl_easy_duphandle(mCurl);
 	runtimeAssert("Error when trying to curl_easy_duphandle() a handle", cHandle != nullptr);
-	unique_ptr<CurlHandle> newHandle(new CurlHandle(cHandle, mMaxBufSize));
+	unique_ptr<CurlHandle> newHandle(new CurlHandle(cHandle, max_buf_size_));
 
 	return newHandle;
 }

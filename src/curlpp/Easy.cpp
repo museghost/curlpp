@@ -29,14 +29,26 @@
 #include <memory>
 
 
-curlpp::Easy::Easy(size_t maxBufSize)
-: mCurl(new internal::CurlHandle(maxBufSize))
+curlpp::Easy::Easy(size_t max_buf_size):
+	mCurl(new internal::CurlHandle(max_buf_size)),
+	free_uint1_(0),
+	free_uint2_(0),
+	free_int1_(0),
+	free_int2_(0),
+	free_text1_(""),
+	free_text2_("")
 {
 }
 
 
-curlpp::Easy::Easy(std::unique_ptr<internal::CurlHandle> handle)
-    : mCurl(std::move(handle))
+curlpp::Easy::Easy(std::unique_ptr<internal::CurlHandle> handle):
+	mCurl(std::move(handle)),
+	free_uint1_(0),
+	free_uint2_(0),
+	free_int1_(0),
+	free_int2_(0),
+	free_text1_(""),
+	free_text2_("")
 {
 }
 

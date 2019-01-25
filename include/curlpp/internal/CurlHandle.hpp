@@ -51,8 +51,8 @@ namespace internal
 
 	public:
 
-		CurlHandle(size_t maxBufSize=4096);
-		CurlHandle(CURL * handle, size_t maxBufSize=4096);
+		CurlHandle(size_t max_buf_size=4096);
+		CurlHandle(CURL * handle, size_t max_buf_size=4096);
 
 		std::unique_ptr<CurlHandle> clone() const;
 
@@ -200,14 +200,11 @@ namespace internal
 		void errorBuffer(char* buffer);
 
 	private:
-
 		CURL * mCurl;
-
 		char mErrorBuffer[CURL_ERROR_SIZE + 1];
-
         char* mBuf;
         size_t mSize;
-        size_t mMaxBufSize;
+        size_t max_buf_size_;
 
 		curlpp::types::WriteDataFunctionFunctor mWriteDataFunctor;
 		curlpp::types::WriteFunctionFunctor mWriteFunctor;
