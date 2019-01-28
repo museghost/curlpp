@@ -24,7 +24,7 @@ include(GNUInstallDirs)
 
 if(WIN32)
     # cmake 3.4 is required for CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS
-    cmake_minimum_required(VERSION 3.4)
+    cmake_minimum_required(VERSION 3.7)
 
     # c++ 14 support from cmake 3.4 or newer
     set(CMAKE_CXX_STANDARD 14) # C++14...
@@ -33,19 +33,10 @@ if(WIN32)
 
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 else()
-    if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} VERSION_LESS 3.1)
-        cmake_minimum_required(VERSION 2.8)
-        # c++11 support for cmake 2.8.12 - 3.0.x
-        #
-        # for non-windows platform we try to keep cmake 2.8 support
-        # since entreprise distribution tends to have 2.8 version.
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    else()
-        # c++ 14 support from cmake 3.1 or newer
-        set(CMAKE_CXX_STANDARD 14) # C++14...
-        set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
-        set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
-    endif()
+    # c++ 14 support from cmake 3.1 or newer
+    set(CMAKE_CXX_STANDARD 14) # C++14...
+    set(CMAKE_CXX_STANDARD_REQUIRED ON) #...is required...
+    set(CMAKE_CXX_EXTENSIONS OFF) #...without compiler extensions like gnu++11
 endif()
 
 
@@ -60,7 +51,7 @@ add_subdirectory(extras)
 
 include(FindCustomCURL)
 # find libcurl
-find_custom_curl(CURL 7.62.0)
+find_custom_curl(CURL2 7.62.0)
 
 # find openssl
 include(FindCustomOpenSSL)
@@ -82,6 +73,11 @@ if(CURLPP_NGHTTP2)
     find_custom_nghttp2(NGHTTP2 1.34.0)
 endif()
 
+include(TargetPrintInfo)
+print_target_properties(PkgConfig::CURL2)
+print_target_properties(PkgConfig::NGHTTP2)
+print_target_properties(PkgConfig::OPENSSL)
+
 # All following targets should search these directories for headers
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -102,14 +98,18 @@ file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 if (CURLPP_BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
+    message(STATUS "CURL2_LINK_LIBRARIES: ${CURL2_LINK_LIBRARIES}")
+    message(STATUS "NGHTTP2_LINK_LIBRARIES: ${NGHTTP2_LINK_LIBRARIES}")
+    message(STATUS "CURL2_LIBRARIES: ${CURL2_LIBRARIES}")
+    message(STATUS "CURL2_LDFLAGS: ${CURL2_LDFLAGS}")
     target_link_libraries(${PROJECT_NAME}
-            ${CURL_LIBRARIES}
+            PkgConfig::CURL2
+            PkgConfig::NGHTTP2
+            PkgConfig::OPENSSL            
             ${CONAN_LIBS}
-            ${NGHTTP2_LIBRARIES}
-            ${OPENSSL_LIBRARIES}
             )
     set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0)
-    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.8.1)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.8.2)
 
 endif()
 
@@ -130,10 +130,10 @@ if (CURLPP_BUILD_STATIC_LIBS)
         SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
     endif()
     target_link_libraries(${PROJECT_NAME}_static
-            ${CURL_LIBRARIES}
+            PkgConfig::CURL2
+            PkgConfig::NGHTTP2
+            PkgConfig::OPENSSL
             ${CONAN_LIBS}
-            ${NGHTTP2_LIBRARIES}
-            ${OPENSSL_LIBRARIES}
             )
 endif()
 

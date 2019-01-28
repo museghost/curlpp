@@ -26,25 +26,46 @@ endmacro()
 
 function(find_custom_library _NAME _LIBS _VER)
     message(STATUS "Looking for ${_NAME} (${_VER})")
-    set(OLD_PKG_CONFIG_PATH "$ENV{PKG_CONFIG_PATH}")
-    unset(ENV{PKG_CONFIG_PATH})
 
     if (NOT ${_NAME}_CUSTOM_PATH)
-        find_package(${_NAME} ${_VER} QUIET)
+        find_package(${_NAME} ${_VER} QUIET CONFIG
+                HINTS
+                    "/mingw64/lib/cmake"
+                    "/mingw32/lib/cmake"
+                    "/usr/local/lib/cmake"
+                    "/usr/lib/cmake")
         if(${_NAME}_FOUND)
             set(${_NAME}_VERSION ${${_NAME}_VERSION_STRING})
         else()
             include(FindPkgConfig)
             message(STATUS "normal pkg_config_path: $ENV{PKG_CONFIG_PATH}")
-            pkg_check_modules(${_NAME} ${_LIBS}>=${_VER})
+            pkg_check_modules(${_NAME} IMPORTED_TARGET ${_LIBS}>=${_VER})
         endif()
     else()
         message(STATUS "Manually set ${_NAME} path: ${${_NAME}_CUSTOM_PATH}")
-        set(ENV{PKG_CONFIG_PATH} "${${_NAME}_CUSTOM_PATH}/lib/pkgconfig")
-        message(STATUS "pkg_config_path : $ENV{PKG_CONFIG_PATH}")
 
-        include(FindPkgConfig)
-        pkg_check_modules(${_NAME} ${_LIBS}>=${_VER})
+        message(STATUS "1st - find_package")
+        find_package(${_NAME} ${_VER} QUIET CONFIG
+                HINTS
+                    "${${_NAME}_CUSTOM_PATH}/lib/cmake"
+                )
+
+        if(${_NAME}_FOUND)
+            set(${_NAME}_VERSION ${${_NAME}_VERSION_STRING})
+        else()
+            message(STATUS "2nd - pkg_check_modules()")
+
+            set(OLD_PKG_CONFIG_PATH "$ENV{PKG_CONFIG_PATH}")
+            unset(ENV{PKG_CONFIG_PATH})
+
+            set(ENV{PKG_CONFIG_PATH} "${${_NAME}_CUSTOM_PATH}/lib/pkgconfig")
+            message(STATUS "pkg_config_path : $ENV{PKG_CONFIG_PATH}")
+
+            include(FindPkgConfig)
+            pkg_check_modules(${_NAME} IMPORTED_TARGET ${_LIBS}>=${_VER})
+
+            set(ENV{PKG_CONFIG_PATH} "${OLD_PKG_CONFIG_PATH}")
+        endif()
     endif()
 
     if(${_NAME}_FOUND)
@@ -52,15 +73,16 @@ function(find_custom_library _NAME _LIBS _VER)
         message(STATUS "Using ${_NAME} include dir(s): ${${_NAME}_INCLUDE_DIRS}")
         message(STATUS "Using ${_NAME} lib dir(s): ${${_NAME}_LIBRARY_DIRS}")
         message(STATUS "Using ${_NAME} lib(s): ${${_NAME}_LIBRARIES}")
-
-        include_directories(${${_NAME}_INCLUDE_DIRS})
-        link_directories(${${_NAME}_LIBRARY_DIRS})
-        message(STATUS "added it into INCLUDE_DIRECTORIES and LINK_DIRECTORIES")
+        message(STATUS "Using ${_NAME} link lib(s): ${${_NAME}_LINK_LIBRARIES}")
+        message(STATUS "Using ${_NAME} _ldflags(s): ${${_NAME}_LDFLAGS}")
+        message(STATUS "Using ${_NAME} _ldflags_other(s): ${${_NAME}_LDFLAGS_OTHER}")
+        message(STATUS "Using ${_NAME} _cflags(s): ${${_NAME}_CFLAGS}")
+        message(STATUS "Using ${_NAME} _cflags_other(s): ${${_NAME}_CFLAGS_OTHER}")
     else()
         message(FATAL_ERROR "Could not find ${_NAME}")
-        set(ENV{PKG_CONFIG_PATH} "${OLD_PKG_CONFIG_PATH}")
+        #set(ENV{PKG_CONFIG_PATH} "${OLD_PKG_CONFIG_PATH}")
         exit()
     endif()
 
-    set(ENV{PKG_CONFIG_PATH} "${OLD_PKG_CONFIG_PATH}")
+
 endfunction()
