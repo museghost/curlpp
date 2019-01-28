@@ -34,7 +34,6 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/curlpp-config"
           GROUP_READ GROUP_EXECUTE
           WORLD_READ WORLD_EXECUTE)
 
-
 # Finally generate a pkg-config file matching this config
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/curlpp.pc.in"
                "${CMAKE_CURRENT_BINARY_DIR}/curlpp.pc" @ONLY)

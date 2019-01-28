@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 
+cmake_policy(SET CMP0074 NEW)
+
 project(curlpp)
 
 
@@ -49,21 +51,20 @@ endif()
 # extra (pkg-config-related files)
 add_subdirectory(extras)
 
-include(FindCustomCURL)
-# find libcurl
-find_custom_curl(CURL2 7.62.0)
+# curl
+find_package(CURL 7.62.0 MODULE REQUIRED)
 
-# find openssl
-include(FindCustomOpenSSL)
+# openssl
+# TODO: 지우기 include(FindCustomOpenSSL)
 if(APPLE)
     message(STATUS "APPLE try to find openssl with brew")
-    find_custom_openssl(OPENSSL 1.0.2)
+    find_package(OPENSSL 1.0.2 REQUIRED)
 elseif(UNIX AND NOT APPLE)
     message(STATUS "LINUX try to find openssl in /usr/local")
-    find_custom_openssl(OPENSSL 1.1.0i)
+    find_package(OPENSSL 1.1.0 REQUIRED)
 elseif(MINGW)
     message(STATUS "MinGW try to find openssl in mingw")
-    find_custom_openssl(OPENSSL 1.0.2)
+    find_package(OPENSSL 1.0.2 REQUIRED)
 endif()
 
 # find nghttp2
@@ -74,9 +75,10 @@ if(CURLPP_NGHTTP2)
 endif()
 
 include(TargetPrintInfo)
-print_target_properties(PkgConfig::CURL2)
+print_target_properties(CURL::libcurl)
 print_target_properties(PkgConfig::NGHTTP2)
-print_target_properties(PkgConfig::OPENSSL)
+print_target_properties(OpenSSL::SSL)
+print_target_properties(OpenSSL::Crypto)
 
 # All following targets should search these directories for headers
 include_directories(
@@ -98,14 +100,11 @@ file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 if (CURLPP_BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
-    message(STATUS "CURL2_LINK_LIBRARIES: ${CURL2_LINK_LIBRARIES}")
-    message(STATUS "NGHTTP2_LINK_LIBRARIES: ${NGHTTP2_LINK_LIBRARIES}")
-    message(STATUS "CURL2_LIBRARIES: ${CURL2_LIBRARIES}")
-    message(STATUS "CURL2_LDFLAGS: ${CURL2_LDFLAGS}")
     target_link_libraries(${PROJECT_NAME}
-            PkgConfig::CURL2
+            CURL::libcurl
             PkgConfig::NGHTTP2
-            PkgConfig::OPENSSL            
+            OpenSSL::SSL
+            OpenSSL::Crypto
             ${CONAN_LIBS}
             )
     set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0)
@@ -130,9 +129,10 @@ if (CURLPP_BUILD_STATIC_LIBS)
         SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
     endif()
     target_link_libraries(${PROJECT_NAME}_static
-            PkgConfig::CURL2
+            CURL::libcurl
             PkgConfig::NGHTTP2
-            PkgConfig::OPENSSL
+            OpenSSL::SSL
+            OpenSSL::Crypto
             ${CONAN_LIBS}
             )
 endif()
@@ -142,10 +142,46 @@ install(DIRECTORY include/utilspp/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/util
 install(DIRECTORY include/curlpp/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/curlpp")
 
 if (CURLPP_BUILD_SHARED_LIBS)
-    install(TARGETS ${PROJECT_NAME}
+    install(TARGETS ${PROJECT_NAME} EXPORT "${PROJECT_NAME}-targets"
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
             ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+    # exporting targets
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
+            "${CMAKE_BINARY_DIR}/extras/${PROJECT_NAME}-config-version.cmake"
+            VERSION "0.8.2"
+            COMPATIBILITY AnyNewerVersion
+    )
+
+    #export(EXPORT "curlpp-targets"
+    #      FILE "${CMAKE_BINARY_DIR}/curlpp/curlpp-targets.cmake"
+    #      NAMESPACE "CURLPP::"
+    #)
+
+    configure_file("extras/${PROJECT_NAME}-config.cmake"
+        "${CMAKE_BINARY_DIR}/extras/${PROJECT_NAME}-config.cmake"
+        @ONLY
+    )
+
+    # curlpp-targets.cmake
+    install(
+    EXPORT "${PROJECT_NAME}-targets"
+    FILE
+        "${PROJECT_NAME}-targets.cmake"
+    NAMESPACE
+        "CURLPP::"
+    DESTINATION
+        "${CMAKE_INSTALL_LIBDIR}/cmake/CURLPP"
+    )
+
+    install(
+        FILES
+        "${CMAKE_BINARY_DIR}/extras/${PROJECT_NAME}-config.cmake"
+        "${CMAKE_BINARY_DIR}/extras/${PROJECT_NAME}-config-version.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/CURLPP"
+        )
 endif()
 
 if (CURLPP_BUILD_STATIC_LIBS)
