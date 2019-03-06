@@ -32,50 +32,50 @@
 #include <map>
 
 
-namespace curlpp
-{
-
+namespace curlpp {
 
 	class Easy;
 
-	class Multi
-	{
-
+	class Multi {
 	public:
-
 		struct Info 
 		{
 			CURLcode code;
 			CURLMSG msg;
 		};
 
-	public:
+		typedef std::vector<std::pair<const curlpp::Easy*, Multi::Info> > Msgs;
 
 		Multi();
 		~Multi();
 
-		void add(const curlpp::Easy * handle);
-		void remove(const curlpp::Easy * handle);
-
+		void Add(const curlpp::Easy* handle);
+		void Remove(const curlpp::Easy* handle);
 		bool perform(int * nbHandles);
-		void fdset(fd_set * read_fd_set,
-								fd_set * write_fd_set,
-								fd_set * exc_fd_set,
-								int * max_fd);
-
-		typedef std::vector<std::pair<const curlpp::Easy *, Multi::Info> > Msgs;
+		void fdset(fd_set * read_fd_set, fd_set * write_fd_set, fd_set * exc_fd_set, int * max_fd);
 
 		Msgs info();
         size_t infos(curlpp::Multi::Msgs& result);
 
-		const CURLM* getMHandle() const;
+        // TODO: sockfd
+        void AddSocket(CURL* easy, curl_socket_t sockfd);
+        CURL* EasyRawBySocket(curl_socket_t sockfd);
 
-		CURLM* getMHandle();
+        const CURLM* raw() const;
+		CURLM* raw();
 
 	private:
+		CURLM* curlm_;
+		std::map<CURL*, const curlpp::Easy*> handles_;
+		// TODO: sockfd
+		std::map<curl_socket_t, CURL*> sockets_;
+		std::map<curl_socket_t, CURL*>::iterator sit_;
+		std::map<CURL*, curl_socket_t> mapper_;
+		std::map<CURL*, curl_socket_t>::iterator mit_;
 
-		CURLM* mMultiHandle;
-		std::map<CURL *, const curlpp::Easy *> mHandles;
+
+		Multi(const Multi &);
+		Multi &operator=(const Multi &);
 	};
 
 

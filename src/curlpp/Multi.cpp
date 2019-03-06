@@ -26,118 +26,144 @@
 #include "curlpp/Exception.hpp"
 #include "curlpp/Multi.hpp"
 
-
-curlpp::Multi::Multi()
-{
-  mMultiHandle = curl_multi_init();
-  runtimeAssert("Error when trying to curl_multi_init() a handle", mMultiHandle != NULL);
-}
-
-curlpp::Multi::~Multi()
-{
-  // remove all the remaining easy handles
-  while (!mHandles.empty()) 
-  {
-    std::map<CURL *, const curlpp::Easy *>::iterator handle = mHandles.begin();
-    // if caller deletes request before, this would raise EXC_BAD_ACCESS error using handle->second->getHandle()
-    curl_multi_remove_handle(mMultiHandle, handle->first);
-    mHandles.erase(handle);
-  }
-
-  curl_multi_cleanup(mMultiHandle);
-}
-
-void
-curlpp::Multi::add(const curlpp::Easy * handle)
-{
-  CURLMcode code = curl_multi_add_handle(mMultiHandle, handle->getHandle());
-  if(code != CURLM_CALL_MULTI_PERFORM) {
-    if(code != CURLM_OK) {
-      throw curlpp::RuntimeError(curl_multi_strerror(code));
-    }
-  }
-  mHandles.insert(std::make_pair(handle->getHandle(),handle));
-}
-
-void
-curlpp::Multi::remove(const curlpp::Easy * handle)
-{
-  CURLMcode code = curl_multi_remove_handle(mMultiHandle, handle->getHandle());
-  if(code != CURLM_CALL_MULTI_PERFORM) {
-    if(code != CURLM_OK) {
-      throw curlpp::RuntimeError(curl_multi_strerror(code));
-    }
-  }
-  mHandles.erase(handle->getHandle());
-}
-
-bool
-curlpp::Multi::perform(int * nbHandles)
-{
-  CURLMcode code = curl_multi_perform(mMultiHandle, nbHandles);
-  if(code == CURLM_CALL_MULTI_PERFORM) {
-    return false;
-  }
-
-  if(code != CURLM_OK) {
-    throw curlpp::RuntimeError(curl_multi_strerror(code));
-  }
-
-  return true;
-}
-
-void
-curlpp::Multi::fdset(fd_set * read, fd_set * write, fd_set * exc, int * max)
-{
-  CURLMcode code = curl_multi_fdset(mMultiHandle, read, write, exc, max);
-  if(code != CURLM_CALL_MULTI_PERFORM) {
-    if(code != CURLM_OK) {
-      throw curlpp::RuntimeError(curl_multi_strerror(code));
-    }
-  }
-}
-
-curlpp::Multi::Msgs
-curlpp::Multi::info()
-{
-  CURLMsg * msg; /* for picking up messages with the transfer status */
-  
-  int msgsInQueue;
-  Msgs result;
-  while ((msg = curl_multi_info_read(mMultiHandle, &msgsInQueue)) != NULL) {
-    Multi::Info inf;
-    inf.msg = msg->msg;
-    inf.code = msg->data.result;
-    result.emplace_back(std::make_pair(mHandles[msg->easy_handle],inf));
-  }
-
-  return result;
-}
-
-size_t
-curlpp::Multi::infos(curlpp::Multi::Msgs& result)
-{
-    size_t idx = 0;
-    CURLMsg* msg; /* for picking up messages with the transfer status */
-
-    int msgsInQueue;
-    while ((msg = curl_multi_info_read(mMultiHandle, &msgsInQueue)) != NULL) {
-
-        result[idx].first = mHandles[msg->easy_handle];
-        result[idx].second.msg = msg->msg;
-        result[idx].second.code = msg->data.result;
-        idx++;
+namespace curlpp {
+    Multi::Multi() {
+        curlm_ = curl_multi_init();
+        runtimeAssert("Error when trying to curl_multi_init() a handle", curlm_ != nullptr);
     }
 
-    return idx;
-}
+    Multi::~Multi() {
+        // remove all the remaining easy handles
+        while (!handles_.empty())
+        {
+            std::map<CURL *, const Easy *>::iterator handle = handles_.begin();
+            // if caller deletes request before, this would raise EXC_BAD_ACCESS error using handle->second->getHandle()
+            curl_multi_remove_handle(curlm_, handle->first);
+            handles_.erase(handle);
+        }
 
-const CURLM*
-curlpp::Multi::getMHandle() const {
-  return mMultiHandle;
-}
+        curl_multi_cleanup(curlm_);
+    }
 
-CURLM*
-curlpp::Multi::getMHandle() {
-  return mMultiHandle;
+    const CURLM* Multi::raw() const {
+        return curlm_;
+    }
+
+    CURLM* Multi::raw() {
+        return curlm_;
+    }
+
+    void Multi::Add(const Easy * handle) {
+        CURLMcode code = curl_multi_add_handle(curlm_, handle->getHandle());
+        if(code != CURLM_CALL_MULTI_PERFORM) {
+            if(code != CURLM_OK) {
+                throw RuntimeError(curl_multi_strerror(code));
+            }
+        }
+        handles_.insert(std::make_pair(handle->getHandle(), handle));
+        // TODO: 여기서 sockfd 를 가져올 수 있을까?
+    }
+
+    void Multi::Remove(const Easy * handle){
+        CURLMcode code = curl_multi_remove_handle(curlm_, handle->getHandle());
+        if(code != CURLM_CALL_MULTI_PERFORM) {
+            if(code != CURLM_OK) {
+                throw RuntimeError(curl_multi_strerror(code));
+            }
+        }
+        handles_.erase(handle->getHandle());
+    }
+
+    bool
+    Multi::perform(int * nbHandles)
+    {
+        CURLMcode code = curl_multi_perform(curlm_, nbHandles);
+        if(code == CURLM_CALL_MULTI_PERFORM) {
+            return false;
+        }
+
+        if(code != CURLM_OK) {
+            throw RuntimeError(curl_multi_strerror(code));
+        }
+
+        return true;
+    }
+
+    void
+    Multi::fdset(fd_set * read, fd_set * write, fd_set * exc, int * max)
+    {
+        CURLMcode code = curl_multi_fdset(curlm_, read, write, exc, max);
+        if(code != CURLM_CALL_MULTI_PERFORM) {
+            if(code != CURLM_OK) {
+                throw RuntimeError(curl_multi_strerror(code));
+            }
+        }
+    }
+
+    Multi::Msgs
+    Multi::info()
+    {
+        CURLMsg * msg; /* for picking up messages with the transfer status */
+
+        int msgsInQueue;
+        Msgs result;
+        while ((msg = curl_multi_info_read(curlm_, &msgsInQueue)) != NULL) {
+            Multi::Info inf;
+            inf.msg = msg->msg;
+            inf.code = msg->data.result;
+            result.emplace_back(std::make_pair(handles_[msg->easy_handle],inf));
+        }
+
+        return result;
+    }
+
+    size_t Multi::infos(Multi::Msgs& result) {
+        size_t idx = 0;
+        CURLMsg* msg; /* for picking up messages with the transfer status */
+
+        int msgsInQueue;
+        while ((msg = curl_multi_info_read(curlm_, &msgsInQueue)) != NULL) {
+
+            result[idx].first = handles_[msg->easy_handle];
+            result[idx].second.msg = msg->msg;
+            result[idx].second.code = msg->data.result;
+            idx++;
+        }
+
+        return idx;
+    }
+
+    void Multi::AddSocket(CURL* easy, curl_socket_t sockfd) {
+        // It is possible that each easy handler could share a same socket
+        // So, the key should be easy handler
+
+        // 여기는 sockfd -> last easy handler
+        sit_ = sockets_.find(sockfd);
+        if (sit_ != sockets_.end()) {
+            // found
+            sit_->second = easy;
+        } else {
+            // new
+            sockets_.insert(std::pair<curl_socket_t, CURL*>(sockfd, easy));
+        }
+
+        // 여기는 easy handler -> several sockfds ...
+        mit_ = mapper_.find(easy);
+        if (mit_ != mapper_.end()) {
+            // found
+            mit_->second = sockfd;
+        } else {
+            // new
+            mapper_.insert(std::pair<CURL*, curl_socket_t>(easy, sockfd));
+        }
+    }
+
+    CURL* Multi::EasyRawBySocket(curl_socket_t sockfd) {
+        sit_ = sockets_.find(sockfd);
+        if (sit_ == sockets_.end()) {
+            return nullptr;
+        } else {
+            return sit_->second;
+        }
+    }
 }
