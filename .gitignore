@@ -1,4 +1,5 @@
 # project
+builds/**
 build/**
 nbproject/**
 run/**
