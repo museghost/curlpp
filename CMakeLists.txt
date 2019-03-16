@@ -16,10 +16,7 @@ project(curlpp)
 
 option(CURLPP_BUILD_SHARED_LIBS "build shared libs" ON)
 option(CURLPP_BUILD_STATIC_LIBS "build static libs" ON)
-option(CURLPP_NGHTTP2 "supported nghttp2" ON)
-
-# Append our module directory to CMake
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-macro)
+option(CURLPP_CURL_PATH "additional path to find curl" "")
 
 # for unix platform, define install directories.
 include(GNUInstallDirs)
@@ -51,38 +48,34 @@ endif()
 # extra (pkg-config-related files)
 add_subdirectory(extras)
 
-# curl
-find_package(CURL 7.62.0 MODULE REQUIRED)
+#########################################################################################
+# Look for dependencies
 
-# openssl
-# TODO: 지우기 include(FindCustomOpenSSL)
-if(APPLE)
-    message(STATUS "APPLE try to find openssl with brew")
-    find_package(OPENSSL 1.0.2 REQUIRED)
-elseif(UNIX AND NOT APPLE)
-    message(STATUS "LINUX try to find openssl in /usr/local")
-    find_package(OPENSSL 1.1.0 REQUIRED)
-elseif(MINGW)
-    message(STATUS "MinGW try to find openssl in mingw")
-    find_package(OPENSSL 1.0.2 REQUIRED)
+# Documented at https://cmake.org/cmake/help/v3.0/module/FindCURL.html?highlight=curlpp
+# Seems simple.
+
+if (CURLPP_CURL_PATH STREQUAL "")
+    message(STATUS "Looking for CURL")
+    include(FindCURL)
+    find_package(CURL REQUIRED)
+
+    if(CURL_FOUND)
+        message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
+        message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
+        message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "Could not find CURL")
+    endif()
+else()
+    message(STATUS "Manually set CURL path: " ${CURLPP_CURL_PATH})
+    set(CURL_INCLUDE_DIRS ${CURLPP_CURL_PATH}/include)
+    set(CURL_LIBRARIES ${CURLPP_CURL_PATH}/lib/libcurl.a)
 endif()
-
-# find nghttp2
-if(CURLPP_NGHTTP2)
-    message(STATUS "nghttp2 ${CURLPP_NGHTTP2}")
-    include(FindCustomNghttp2)
-    find_custom_nghttp2(NGHTTP2 1.34.0)
-endif()
-
-include(TargetPrintInfo)
-print_target_properties(CURL::libcurl)
-print_target_properties(PkgConfig::NGHTTP2)
-print_target_properties(OpenSSL::SSL)
-print_target_properties(OpenSSL::Crypto)
 
 # All following targets should search these directories for headers
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+include_directories( 
+  ${CMAKE_CURRENT_SOURCE_DIR}/include
+  ${CURL_INCLUDE_DIRS}
 )
 
 #########################################################################################
@@ -100,14 +93,8 @@ file(GLOB_RECURSE SourceFileList "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
 
 if (CURLPP_BUILD_SHARED_LIBS)
     add_library(${PROJECT_NAME} SHARED ${HeaderFileList} ${SourceFileList})
-    target_link_libraries(${PROJECT_NAME}
-            CURL::libcurl
-            PkgConfig::NGHTTP2
-            OpenSSL::SSL
-            OpenSSL::Crypto
-            ${CONAN_LIBS}
-            )
-    set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0)
+    target_link_libraries(${PROJECT_NAME} ${CONAN_LIBS})
+    set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0.8.2)
     set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 0.8.2)
 
 endif()
@@ -128,13 +115,7 @@ if (CURLPP_BUILD_STATIC_LIBS)
     if (NOT (CMAKE_SYSTEM MATCHES "Windows"))
         SET_TARGET_PROPERTIES(${PROJECT_NAME}_static PROPERTIES PREFIX "lib")
     endif()
-    target_link_libraries(${PROJECT_NAME}_static
-            CURL::libcurl
-            PkgConfig::NGHTTP2
-            OpenSSL::SSL
-            OpenSSL::Crypto
-            ${CONAN_LIBS}
-            )
+    target_link_libraries(${PROJECT_NAME}_static ${CONAN_LIBS})
 endif()
 
 # install headers
