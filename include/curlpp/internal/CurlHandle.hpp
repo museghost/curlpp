@@ -169,15 +169,15 @@ namespace internal
             return mBuf;
         }
 
-        void setBufferSize(size_t size) {
+        void set_buffer_size(size_t size) {
             mSize = size;
         }
 
-        size_t bufferSize() {
+        size_t buffer_size() {
             return mSize;
         }
 
-        const size_t bufferSize() const {
+        const size_t buffer_size() const {
             return mSize;
         }
 
