@@ -127,7 +127,7 @@ curlpp::Easy::reset ()
 std::ostream & operator<<(std::ostream & stream, const curlpp::Easy & request)
 {
   // Quick clone that doesn't copy options, only the curl handle.
-  curlpp::Easy r(request.getCurlHandle().clone());
+  curlpp::Easy r(request.curl_handle().clone());
   r.setOpt(new curlpp::options::WriteStream(& stream));
   r.perform();
 

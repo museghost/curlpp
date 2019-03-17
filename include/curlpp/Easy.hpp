@@ -132,8 +132,8 @@ namespace curlpp
 		*/
         CURL * getHandle() const;
 
-        internal::CurlHandle & getCurlHandle() { return *mCurl; }
-        const internal::CurlHandle & getCurlHandle() const { return *mCurl; }
+        internal::CurlHandle & curl_handle() { return *mCurl; }
+        const internal::CurlHandle & curl_handle() const { return *mCurl; }
 
         /**
          * support free fields
