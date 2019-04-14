@@ -40,7 +40,7 @@ namespace curlpp {
             //std::map<CURL*, const Easy *>::iterator handle = handles_.begin();
             // if caller deletes request before, this would raise EXC_BAD_ACCESS error using handle->second->getHandle()
             //curl_multi_remove_handle(curlm_, handle->first);
-            curl_multi_remove_handle(curlm_, it->first);
+            curl_multi_remove_handle(curlm_, it.first);
             //handles_.erase(handle);
         }
 
@@ -51,7 +51,7 @@ namespace curlpp {
     void Multi::Dispose() {
 
         for (const auto& it: handles_) {
-            curl_multi_remove_handle(curlm_, it->first);
+            curl_multi_remove_handle(curlm_, it.first);
         }
 
         handles_.clear();
@@ -114,8 +114,7 @@ namespace curlpp {
     }
 
     Multi::Msgs
-    Multi::Info()
-    {
+    Multi::ReadMsg() {
         CURLMsg * msg; /* for picking up messages with the transfer status */
 
         int msgsInQueue;
@@ -130,7 +129,7 @@ namespace curlpp {
         return result;
     }
 
-    size_t Multi::Info(Multi::Msgs& result) {
+    size_t Multi::ReadMsg(Multi::Msgs& result) {
         size_t idx = 0;
         int pending;
         // CURL* easy_handle;
