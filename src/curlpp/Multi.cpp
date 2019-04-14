@@ -34,14 +34,27 @@ namespace curlpp {
 
     Multi::~Multi() {
         // remove all the remaining easy handles
-        while (!handles_.empty())
-        {
-            std::map<CURL *, const Easy *>::iterator handle = handles_.begin();
+        //while (!handles_.empty())
+        for (const auto& it: handles_) {
+
+            //std::map<CURL*, const Easy *>::iterator handle = handles_.begin();
             // if caller deletes request before, this would raise EXC_BAD_ACCESS error using handle->second->getHandle()
-            curl_multi_remove_handle(curlm_, handle->first);
-            handles_.erase(handle);
+            //curl_multi_remove_handle(curlm_, handle->first);
+            curl_multi_remove_handle(curlm_, it->first);
+            //handles_.erase(handle);
         }
 
+        handles_.clear();
+        curl_multi_cleanup(curlm_);
+    }
+
+    void Multi::Dispose() {
+
+        for (const auto& it: handles_) {
+            curl_multi_remove_handle(curlm_, it->first);
+        }
+
+        handles_.clear();
         curl_multi_cleanup(curlm_);
     }
 
@@ -101,7 +114,7 @@ namespace curlpp {
     }
 
     Multi::Msgs
-    Multi::info()
+    Multi::Info()
     {
         CURLMsg * msg; /* for picking up messages with the transfer status */
 
@@ -117,11 +130,31 @@ namespace curlpp {
         return result;
     }
 
-    size_t Multi::infos(Multi::Msgs& result) {
+    size_t Multi::Info(Multi::Msgs& result) {
         size_t idx = 0;
-        CURLMsg* msg; /* for picking up messages with the transfer status */
+        int pending;
+        // CURL* easy_handle;
+        CURLMsg* message; /* for picking up messages with the transfer status */
 
-        int msgsInQueue;
+        do {
+            if((message = curl_multi_info_read(curlm_, &pending))) {
+                switch(message->msg) {
+                    case CURLMSG_DONE:
+                        // easy_handle = message->easy_handle;
+                        result[idx].first = handles_.at(message->easy_handle);
+                        result[idx].second.msg = message->msg;
+                        result[idx].second.code = message->data.result;
+                        idx++;
+                        break;
+                    default:
+                        break;
+                }
+
+            } // ene-if
+        } while(pending);
+
+#if 0
+
         while ((msg = curl_multi_info_read(curlm_, &msgsInQueue)) != NULL) {
 
             result[idx].first = handles_[msg->easy_handle];
@@ -129,6 +162,7 @@ namespace curlpp {
             result[idx].second.code = msg->data.result;
             idx++;
         }
+#endif
 
         return idx;
     }

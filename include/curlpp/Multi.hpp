@@ -34,49 +34,51 @@
 
 namespace curlpp {
 
-	class Easy;
+class Easy;
 
-	class Multi {
-	public:
-		struct Info 
-		{
-			CURLcode code;
-			CURLMSG msg;
-		};
+class Multi {
+public:
+    struct Info
+    {
+        CURLcode code;
+        CURLMSG msg;
+    };
 
-		typedef std::vector<std::pair<const curlpp::Easy*, Multi::Info> > Msgs;
+    typedef std::vector<std::pair<const curlpp::Easy*, Multi::Info> > Msgs;
 
-		Multi();
-		~Multi();
+    Multi();
+    ~Multi();
 
-		void Add(const curlpp::Easy* handle);
-		void Remove(const curlpp::Easy* handle);
-		bool perform(int * nbHandles);
-		void fdset(fd_set * read_fd_set, fd_set * write_fd_set, fd_set * exc_fd_set, int * max_fd);
+    void Dispose();
+    void Add(const curlpp::Easy* handle);
+    void Remove(const curlpp::Easy* handle);
+    bool perform(int * nbHandles);
+    void fdset(fd_set * read_fd_set, fd_set * write_fd_set, fd_set * exc_fd_set, int * max_fd);
 
-		Msgs info();
-        size_t infos(curlpp::Multi::Msgs& result);
+    Msgs Info();
+    size_t Info(curlpp::Multi::Msgs& result);
 
-        // TODO: sockfd
-        void AddSocket(CURL* easy, curl_socket_t sockfd);
-        CURL* EasyRawBySocket(curl_socket_t sockfd);
+    // TODO: sockfd
+    void AddSocket(CURL* easy, curl_socket_t sockfd);
+    CURL* EasyRawBySocket(curl_socket_t sockfd);
 
-        const CURLM* raw() const;
-		CURLM* raw();
-
-	private:
-		CURLM* curlm_;
-		std::map<CURL*, const curlpp::Easy*> handles_;
-		// TODO: sockfd
-		std::map<curl_socket_t, CURL*> sockets_;
-		std::map<curl_socket_t, CURL*>::iterator sit_;
-		std::map<CURL*, curl_socket_t> mapper_;
-		std::map<CURL*, curl_socket_t>::iterator mit_;
+    const CURLM* raw() const;
+    CURLM* raw();
 
 
-		Multi(const Multi &);
-		Multi &operator=(const Multi &);
-	};
+private:
+    CURLM* curlm_;
+    std::map<CURL*, const curlpp::Easy*> handles_;
+    // TODO: sockfd
+    std::map<curl_socket_t, CURL*> sockets_;
+    std::map<curl_socket_t, CURL*>::iterator sit_;
+    std::map<CURL*, curl_socket_t> mapper_;
+    std::map<CURL*, curl_socket_t>::iterator mit_;
+
+
+    Multi(const Multi &);
+    Multi &operator=(const Multi &);
+};
 
 
 } // namespace curlpp
